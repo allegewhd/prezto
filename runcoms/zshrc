@@ -11,3 +11,189 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # Customize to your needs...
+fpath=(/usr/local/share/zsh-completions $fpath)
+
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+export GOPATH=$HOME
+export HOMEBREW_CASK_OPTS="--appdir=/Applications --caskroom=/usr/local/Caskroom"
+
+# aliases
+
+alias -g H=' | head'
+alias -g T=' | tail'
+alias -g G=' | grep'
+alias -g N='> /dev/null'
+alias -g V=' | vim -R -'
+alias -g P=' --help | less'
+
+alias rr="command rm -rf"
+alias rm="rm -i"
+alias cp="cp -i"
+alias mv="mv -i"
+alias mkdir="mkdir -p"
+
+alias pd="pushd"
+alias po="popd"
+
+alias ll='ls -lahF'
+alias lt='ls -lartF'
+alias dirtree="ls -R | grep \":$\" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/ /' -e 's/-/|/'"
+alias ps='ps -opid,uid,cpu,time,stat,command'
+alias df='df -h'
+alias dus='du -sh'
+alias info='info --vi-keys'
+alias less='less -imJMW'
+alias cls='clear' # note: ctrl-L under zsh does something similar
+alias locate='locate -i'
+
+if [ -f /usr/local/bin/vim ]; then
+    alias vi='/usr/local/bin/vim'
+    alias vim='/usr/local/bin/vim'
+    alias vimdiff='/usr/local/bin/vimdiff'
+    alias vd='/usr/local/bin/vimdiff'
+fi
+
+if [ -f /usr/local/bin/nvim ]; then
+    alias nvi='/usr/local/bin/nvim'
+    alias nv='/usr/local/bin/nvim'
+fi
+
+alias svi='sudo vi'
+
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+alias b='brew'
+alias bs='brew -S'
+alias bi='brew info'
+alias bl='brew list'
+alias bh='brew home'
+alias bopt='brew options'
+alias bout='brew outdated'
+alias bup='brew update'
+alias bupg='brew upgrade'
+alias opbr='open $(brew --prefix)/'
+alias cdbr='pushd $(brew --prefix)/'
+
+
+function git_quick_push() {
+    if [[ "x$1" = "x" ]]; then
+        echo "Error!!! Please enter commit message."
+    else
+        echo "commit with message [$1] ................ "
+        git add . && git ci -m "$1" && git push
+    fi
+}
+
+alias e='open -a emacs'
+alias ec='emacsclient -n'
+alias es='emacsclient -nw -a ""'
+alias ekill='emacsclient -e "(kill-emacs)"'
+
+alias g="git"
+alias gp="git pull"
+alias gt="git status"
+alias h="history"
+alias j="jobs"
+
+alias del="trash -r"
+alias ssh="ssh -Y"
+
+if [[ "$OSTYPE" =~ darwin ]];then
+    alias xcode="open -a '/Applications/XCode.app'"
+    alias safari="open -a safari"
+    alias chrome="open -a google\ chrome"
+    alias f='open -a Finder '
+    alias fh='open -a Finder .'
+
+    alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
+    alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+    alias showall='defaults write com.apple.finder AppleShowAllFiles YES && killall Finder'
+    alias hideall='defaults write com.apple.finder AppleShowAllFiles NO && killall Finder'
+
+    # Get rid of those pesky .DS_Store files recursively
+    alias dsclean='find . -type f -name .DS_Store -print0 | xargs -0 rm'
+
+    # Flush your dns cache
+    alias flush='dscacheutil -flushcache'
+
+    alias bu='brew update --system && brew outdated && brew upgrade --all && brew cleanup'
+fi
+
+alias dl="cd ~/Downloads"
+
+alias tmls='tmux ls'
+alias tma='tmux attach'
+alias tmk='tmux kill-server'
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^xe' edit-command-line
+
+# zaw and cdr plugin
+
+source $HOME/.zsh_plugins/zaw/zaw.zsh
+bindkey '^[d' zaw-cdr
+bindkey '^[g' zaw-git-branches
+bindkey '^[@' zaw-gitdir
+
+function zaw-src-gitdir () {
+  _dir=$(git rev-parse --show-cdup 2>/dev/null)
+  if [ $? -eq 0 ]
+  then
+    candidates=( $(git ls-files ${_dir} | perl -MFile::Basename -nle \
+                                               '$a{dirname $_}++; END{delete $a{"."}; print for sort keys %a}') )
+  fi
+  actions=("zaw-src-gitdir-cd")
+  act_descriptions=("change directory in git repos")
+}
+
+function zaw-src-gitdir-cd () {
+  BUFFER="cd $1"
+  zle accept-line
+}
+zaw-register-src -n gitdir zaw-src-gitdir
+
+autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
+add-zsh-hook chpwd chpwd_recent_dirs
+zstyle ':chpwd:*' recent-dirs-max 5000
+zstyle ':chpwd:*' recent-dirs-default yes
+zstyle ':completion:*' recent-dirs-insert both
+
+# peco functions
+function peco-execute-history() {
+    local item
+    item=$(builtin history -n -r 1 | peco --query="$LBUFFER")
+
+    if [[ -z "$item" ]]; then
+        return 1
+    fi
+
+    BUFFER="$item"
+    CURSOR=$#BUFFER
+    zle accept-line
+}
+
+zle -N peco-execute-history
+bindkey '^x^r' peco-execute-history
+
+function peco-cdr() {
+    local item
+    item=$(cdr -l | sed 's/^[^ ]\{1,\} \{1,\}//' | peco)
+
+    if [[ -z "$item" ]]; then
+        return 1
+    fi
+
+    BUFFER="cd -- $item"
+    CURSOR=$#BUFFER
+    zle accept-line
+}
+
+zle -N peco-cdr
+bindkey '^xb' peco-cdr
+

@@ -17,8 +17,8 @@ fi
 # Editors
 #
 
-export EDITOR='nano'
-export VISUAL='nano'
+export EDITOR='vim'
+export VISUAL='vim'
 export PAGER='less'
 
 #
@@ -26,8 +26,14 @@ export PAGER='less'
 #
 
 if [[ -z "$LANG" ]]; then
-  export LANG='en_US.UTF-8'
+  # export LANG='en_US.UTF-8'
+  export LANG='jp_JP.UTF-8'
 fi
+case ${UID} in
+    0)
+        LANG=C
+        ;;
+esac
 
 #
 # Paths
@@ -44,6 +50,8 @@ typeset -gU cdpath fpath mailpath path
 # Set the list of directories that Zsh searches for programs.
 path=(
   /usr/local/{bin,sbin}
+  $HOME/bin(N-/)
+  /usr/local/opt/coreutils/libexec/gnubin(N-/)
   $path
 )
 
